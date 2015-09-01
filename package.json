@@ -11,15 +11,7 @@
     "type": "git",
     "url": "git+https://github.com/magicdawn/predator.git"
   },
-  "keywords": [
-    "predator",
-    "project-kit"
-  ],
   "author": "magicdawn",
-  "license": "MIT",
-  "bugs": {
-    "url": "https://github.com/magicdawn/predator/issues"
-  },
   "homepage": "https://github.com/magicdawn/predator#readme",
   "dependencies": {
     "bluebird": "^2.9.34",
