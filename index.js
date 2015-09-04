@@ -2,6 +2,9 @@ var app = require('koa')();
 var Router = require('impress-router');
 var router = Router();
 app.use(router);
+var pathFn = require('path');
+var fs = require('fs');
+var predator = {};
 
 /**
  * 使用所有的router
@@ -23,7 +26,7 @@ require('./lib/load-router')(app, __dirname + '/app');
  * yield this.render('foo')
  */
 var defaultView = require('./lib/view').defaultView;
-app.use(defaultView(__dirname));
+// app.use(defaultView(__dirname));
 
 /**
  * less
@@ -40,16 +43,16 @@ app.use(defaultView(__dirname));
  *     - css
  *       index.less
  *     index.js
- *
- *
- *
  */
+predator.less = require('lib/less');
 router.get('/:component/css/:css+.css', function * () {
-  this.body = {
-    component: this.params.component,
-    css: this.params.css,
-    path: '/' + this.params.component + '/css/' + this.params.css + '.less'
-  };
+  var debug = require('debug')('predator:css:middleware');
+  var lessFile = pathFn.join(__dirname, 'app',
+    this.params.component, 'css', this.params.css + '.less');
+  debug('path: %s -> less file: %s', this.path, lessFile);
+
+  this.type = 'css';
+  this.body = yield predator.less.renderAsync(lessFile);
 });
 
 
@@ -57,12 +60,20 @@ router.get('/:component/css/:css+.css', function * () {
  * js
  * middleware & build
  */
+predator.browserify = require('lib/browserify');
 router.get('/:component/js/:js+.js', function * () {
-  this.body = {
-    component: this.params.component,
-    js: this.params.js
-  }
+  this.type = 'js';
+  var js = '/' + this.params.component + '/js/' + this.params.js;
+  this.body = predator.browserify.bundle(js); // stream
 });
+
+/**
+ * img fonts assets
+ */
+predator.static = require('lib/static');
+router.use('/:component/img', predator.static());
+router.use('/:component/fonts', predator.static());
+router.use('/:component/assets', predator.static());
 
 
 /**
