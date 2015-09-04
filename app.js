@@ -9,7 +9,6 @@ var co = require('co');
 var _ = require('lodash');
 var debug = require('debug')('predator:demo');
 
-
 // use router
 app.use(router);
 
@@ -18,7 +17,8 @@ app.use(router);
 global.predator = require('predator-kit')({
   home: __dirname,
   app: app,
-  router: router
+  router: router,
+  buildDir: __dirname + '/public'
 });
 
 /**
@@ -27,14 +27,14 @@ global.predator = require('predator-kit')({
  *   - otherwise, we load a bunch of middlewares
  */
 if (app.env === 'production') {
-  app.use(serve(__dirname + '/public'));
+  app.use(serve(predator.buildDir));
 } else {
   /**
    * img fonts assets
    */
-  router.use('/:component/img', predator.static());
   router.use('/:component/fonts', predator.static());
   router.use('/:component/assets', predator.static());
+  router.use('/:component/img', predator.static());
 
   /**
    * less

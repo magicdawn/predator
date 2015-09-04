@@ -13,57 +13,6 @@ var _ = require('lodash');
 var rev = {};
 
 /**
- * get md5 of content
- */
-var Hash = {
-  /**
-   * for file
-   */
-  file: function(file) {
-    file = pathFn.resolve(file);
-
-    // text ?
-    var textExts = ['.css', '.js', '.html', '.less', '.json'];
-    var ext = pathFn.extname(file);
-    var isText = textExts.indexOf(ext) > -1;
-
-    // content
-    var content;
-    if (isText) {
-      content = fs.readFileSync(file, 'utf8');
-    } else {
-      content = fs.readFileSync(file);
-    }
-    var hash = require('crypto').createHash('md5').update(content).digest('hex');
-    return hash.substr(0, 8);
-  },
-
-  /**
-   * for string
-   */
-  string: function(s) {
-    return require('crypto').createHash('md5').update(s).digest('hex').substr(0, 8);
-  }
-}
-
-/**
- * 复制文件
- */
-var copy = function(src, dest) {
-  if (!fs.existsSync(src) || !dest) {
-    gutil.log('copy failed : %s -> %s', src, dest);
-    return;
-  }
-
-  var dir = pathFn.dirname(dest);
-  if (!fs.existsSync(dir)) {
-    require('mkdirp').sync(dir);
-  }
-
-  fs.createReadStream(src).pipe(fs.createWriteStream(dest));
-};
-
-/**
  * build
  *
  * 1. img/fonts/asset -> copy
@@ -71,104 +20,45 @@ var copy = function(src, dest) {
  * 3. js -> browserify
  */
 gulp.task('build', function(cb) {
-  var staticFiles = glob.sync('*/@(img|assets)/**/*.*', {
-    cwd: __dirname + '/app'
-  });
+  process.env.NODE_ENV = 'production';
+  var app = require('./app');
+  var rev = {};
 
-  // compute hash
-  staticFiles = staticFiles.map(function(item) {
-    var file = __dirname + '/app/' + item;
-    var hash = Hash.file(file);
-    var parsed = pathFn.parse(item);
+  /**
+   * predator as global
+   *
+   * all glob with cwd `app/`
+   */
 
-    return ret = {
-      original: item,
-      hashed: parsed.dir + '/' + parsed.name + '_' + hash + parsed.ext
-    };
-  });
+  // just do copy
+  predator.buildCopy([
+    '*/fonts/**/*'
+  ]);
 
-  // copy
-  staticFiles.forEach(function(item) {
-
-    // set rev map
-    rev[item.original] = item.hashed;
-
-    // copy
-    var src = 'app/' + item.original;
-    var dest = 'public/' + item.hashed;
-    copy(src, dest);
-    gutil.log('predator:static %s -> %s', src, dest);
-  });
-
-  // 只复制,不hash
-  glob.sync('*/fonts/**/*', {
-    cwd: __dirname + '/app'
-  })
-    .forEach(function(item) {
-      var src = 'app/' + item;
-      var dest = 'public/' + item;
-      copy(src, dest);
-    });
+  // name_hash.ext
+  predator.buildStatic([
+    '*/img/**/*.*',
+    '*/assets/**/*.*'
+  ], rev);
 
   co(function * () {
-    // less
-    var renderAsync = require('lib/less').renderAsync;
-    var lessFiles = glob.sync('*/css/**/*.less', {
-      cwd: __dirname + '/app'
-    });
-    for (var i = 0; i < lessFiles.length; i++) {
-      var item = lessFiles[i];
-
-      // less file path
-      var less = 'app/' + item;
-      var content = yield renderAsync(less, {
-        sourceMap: null
-      });
-
-      // replace with hashed resource
-      var escape = require('escape-regexp');
-      _.forOwn(rev, function(hashed, original) {
-        var reg = new RegExp(escape(original), 'g');
-        content = content.replace(reg, hashed);
-      });
-
-      // generate hash rev
-      var hash = Hash.string(content);
-      var parsed = pathFn.parse(item);
-      var original = parsed.dir + '/' + parsed.name + '.css'; // 原来请求的CSS位置
-      var hashed = parsed.dir + '/' + parsed.name + '_' + hash + '.css'; // hash 之后CSS位置
-      rev[original] = hashed;
-
-      // write to `public`
-      var dest = 'public/' + hashed;
-      if (!fs.existsSync(pathFn.dirname(dest))) {
-        require('mkdirp').sync(pathFn.dirname(dest));
-      }
-      fs.writeFileSync(dest, content, 'utf8');
-      gutil.log('predator:less', 'css generated : ', dest);
-    }
+    // less -> css
+    yield predator.buildLessAsync([
+      '*/css/main/**/*.less'
+    ], rev);
 
     // js
-    var jsFiles = glob.sync('*/js/**/*.@(js|json)', {
-      cwd: __dirname + '/app'
-    });
-    var bundle = require('lib/browserify').bundle;
-    require('browserify').prototype.bundleAsync = Promise.promisify(require('browserify').prototype.bundle);
+    yield predator.buildJsAsync([
+      '*/js/main/**/*.js',
+      'global/js/index.json'
+    ], rev);
 
-    // for (var i = 0; i < jsFiles.length; i++) {
-    //   var item = jsFiles[i];
+    // 替换 view, 复制到 view_build 文件夹
+    predator.buildView([
+      '*/view/**/*.*'
+    ], rev);
 
-    //   // js file path
-    //   var file = 'public/' + item;
-    //   var content = yield bundle(file).bundleAsync();
-
-    //   // rev hash
-    //   var hash = Hash.string(content);
-    //   var parsed = pathFn.parse(item);
-    //   var original = item;
-    //   var hashed = parsed.dir + '/' + parsed.name + '_' + hash + parsed.ext
-    // };
-
+    fs.writeFileSync(__dirname + '/rev.json', JSON.stringify(rev, '    ', null), 'utf8');
   })
     .then(function() {
       console.log('done');
