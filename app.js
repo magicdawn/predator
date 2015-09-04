@@ -1,4 +1,4 @@
-var app = require('koa')();
+var app = module.exports = require('koa')();
 var Router = require('impress-router');
 var router = Router();
 var pathFn = require('path');
