@@ -1,80 +1,65 @@
 var app = require('koa')();
 var Router = require('impress-router');
 var router = Router();
-app.use(router);
 var pathFn = require('path');
 var fs = require('fs');
-var predator = {};
+var serve = require('koa-static');
+
+app.use(router);
+
+// create predator
+global.predator = require('predator-kit')({
+  home: __dirname,
+  app: app,
+  router: router
+});
+
+/**
+ * when
+ *   - production, we use `/public` dir
+ *   - otherwise, we load a bunch of middlewares
+ */
+if (app.env === 'production') {
+  app.use(serve(__dirname + '/public'));
+} else {
+  /**
+   * img fonts assets
+   */
+  router.use('/:component/img', predator.static());
+  router.use('/:component/fonts', predator.static());
+  router.use('/:component/assets', predator.static());
+
+  /**
+   * less
+   */
+  router.get('/:component/css/main/:css+.css', function * () {
+    var appHome = pathFn.join(__dirname, 'app');
+    var parsed = pathFn.parse(this.originalPath);
+    var lessFile = pathFn.join(appHome, parsed.dir, parsed.name + '.less');
+    debug('css -> less : %s -> %s', this.path, lessFile);
+
+    this.type = 'css';
+    this.body = yield predator.renderLessAsync(lessFile);
+  });
+
+
+  /**
+   * js
+   * middleware & build
+   */
+  router.get('/:component/js/main/:js+.js', function * () {
+    var js = '/' + this.params.component + '/js/' + this.params.js;
+    this.type = 'js';
+    this.body = predator.browserify.bundle(js); // stream
+  });
+}
+
 
 /**
  * 使用所有的router
  * index.js
  */
-require('./lib/load-router')(app, __dirname + '/app');
-
-/**
- * 渲染所有的 view
- * app
- *   page
- *     views
- *       foo.swig
- *     index.js
- *
- * view_middle_ware
- *
- * var render = require('predator').view(__dirname);
- * yield this.render('foo')
- */
-var defaultView = require('./lib/view').defaultView;
-// app.use(defaultView(__dirname));
-
-/**
- * less
- *
- * less middleware & build
- *
- * app
- *   - global
- *     - css
- *       global.less
- *       some.less
- *     index.js
- *   - index
- *     - css
- *       index.less
- *     index.js
- */
-predator.less = require('lib/less');
-router.get('/:component/css/:css+.css', function * () {
-  var debug = require('debug')('predator:css:middleware');
-  var lessFile = pathFn.join(__dirname, 'app',
-    this.params.component, 'css', this.params.css + '.less');
-  debug('path: %s -> less file: %s', this.path, lessFile);
-
-  this.type = 'css';
-  this.body = yield predator.less.renderAsync(lessFile);
-});
-
-
-/**
- * js
- * middleware & build
- */
-predator.browserify = require('lib/browserify');
-router.get('/:component/js/:js+.js', function * () {
-  this.type = 'js';
-  var js = '/' + this.params.component + '/js/' + this.params.js;
-  this.body = predator.browserify.bundle(js); // stream
-});
-
-/**
- * img fonts assets
- */
-predator.static = require('lib/static');
-router.use('/:component/img', predator.static());
-router.use('/:component/fonts', predator.static());
-router.use('/:component/assets', predator.static());
-
+predator.loadAllRouter();
 
 /**
  * here we go
