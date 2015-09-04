@@ -50,7 +50,7 @@ gulp.task('build', function(cb) {
     // js
     yield predator.buildJsAsync([
       '*/js/main/**/*.js',
-      'global/js/index.json'
+      'global/js/main/index.json'
     ], rev);
 
     // 替换 view, 复制到 view_build 文件夹
@@ -58,10 +58,10 @@ gulp.task('build', function(cb) {
       '*/view/**/*.*'
     ], rev);
 
-    fs.writeFileSync(__dirname + '/rev.json', JSON.stringify(rev, '    ', null), 'utf8');
+    fs.writeFileSync(__dirname + '/rev.json', JSON.stringify(rev, null, '  '), 'utf8');
+    gutil.log('predator', 'rev.json writed');
   })
     .then(function() {
-      console.log('done');
       cb(null);
     })
     .catch(function(e) {

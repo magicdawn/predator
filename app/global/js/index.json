@@ -1,7 +1,0 @@
-[{
-  "require": "jquery",
-  "expose": "jquery"
-}, {
-  "require": "moment",
-  "expose": "moment"
-}]
