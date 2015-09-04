@@ -4,7 +4,7 @@
 
 hello {{ user }}
 
-<script src="/global/js/main/index_13c06472.js"></script>
-<script src="/index/js/main/index_01465b9e.js"></script>
+<script src="/global/js/main/index_bd9b030e.js"></script>
+<script src="/index/js/main/index_4f685e9d.js"></script>
 
 {% endblock %}
