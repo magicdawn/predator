@@ -1,8 +1,6 @@
 /**
  * global base style
  */
-
-.base{
+.base {
   font-family: Hack, '冬青黑体', sans-serif;
-  background-image: url(/global/img/predator.jpg)
 }
