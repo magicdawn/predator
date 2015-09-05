@@ -3,7 +3,6 @@ var co = require('co');
 var app = module.exports = require('koa')();
 var Router = require('impress-router');
 var router = Router();
-var pathFn = require('path');
 var serve = require('koa-static');
 var _ = require('lodash');
 var debug = require('debug')('predator:demo');
