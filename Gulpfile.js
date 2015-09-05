@@ -1,11 +1,9 @@
-var gulp = require('gulp');
-var glob = require('glob');
-var pathFn = require('path');
-var fs = require('fs');
-var gutil = require('gulp-util');
 global.Promise = require('bluebird');
 var co = require('co');
-var _ = require('lodash');
+var gulp = require('gulp');
+var gutil = require('gulp-util');
+var pathFn = require('path');
+var fs = require('fs');
 
 /**
  * rev map
@@ -13,11 +11,7 @@ var _ = require('lodash');
 var rev = {};
 
 /**
- * build
- *
- * 1. img/fonts/asset -> copy
- * 2. css -> less
- * 3. js -> browserify
+ * build Task
  */
 gulp.task('build', function(cb) {
   process.env.NODE_ENV = 'production';

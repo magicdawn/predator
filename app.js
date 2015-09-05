@@ -1,11 +1,10 @@
+global.Promise = require('bluebird');
+var co = require('co');
 var app = module.exports = require('koa')();
 var Router = require('impress-router');
 var router = Router();
 var pathFn = require('path');
-var fs = require('fs');
 var serve = require('koa-static');
-global.Promise = require('bluebird');
-var co = require('co');
 var _ = require('lodash');
 var debug = require('debug')('predator:demo');
 

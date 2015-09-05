@@ -52,6 +52,8 @@ public
 - 只复制
 - 内容做hash处理, view, 不能修改文件名
 
+## 引用方式
 
-
-
+- html引用css/js : `/global/js/main/index.js`
+- css互相引用, less render的时候使用了 path= [. , <project_root>/app/]
+- 全站, app lib ,软链接至 node_modules
