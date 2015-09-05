@@ -69,12 +69,21 @@ gulp.task('build', function() {
   });
 });
 
+/**
+ * do clean stuff
+ */
 gulp.task('clean', ['clean-public', 'clean-view']);
 
+/**
+ * ./public
+ */
 gulp.task('clean-public', function() {
   fs.removeSync(__dirname + '/public');
 });
 
+/**
+ * view_build
+ */
 gulp.task('clean-view', function() {
   var dirs = glob.sync('app/*/view_build');
   dirs.forEach(function(d) {
