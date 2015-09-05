@@ -19,6 +19,8 @@
     "browserify": "^11.0.1",
     "co": "^4.6.0",
     "debug": "^2.2.0",
+    "fs-extra": "^0.24.0",
+    "glob": "^5.0.14",
     "gulp": "^3.9.0",
     "gulp-util": "^3.0.6",
     "impress-router": "^0.1.0",

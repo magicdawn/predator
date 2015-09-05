@@ -1,8 +1,9 @@
 {% extends "../../global/view/basic.swig" %}
 
 {% block body %}
-hello predator
+hello, I'm predator
+{% endblock %}
 
-<script src="/global/js/main/index.js"></script>
+{% block js %}
 <script src="/index/js/main/index.js"></script>
 {% endblock %}
